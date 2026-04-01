@@ -1,3 +1,9 @@
+[workspace]
+members = [
+    "math_rust",
+    "distributed_rust",
+]
+
 [package]
 name = "rust_codes"
 version = "0.1.0"
