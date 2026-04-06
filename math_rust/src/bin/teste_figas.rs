@@ -57,27 +57,22 @@ fn capture_from_terminal(){
     let y: i32 = x.trim().parse().expect("Need to be figas");
 }
 
-fn vec_multi(a: Vec<i32>, b: Vec<i32>) -> Vec<i32>{
+//fn vec_multi(a: Vec<i32>, b: Vec<i32>) -> Vec<i32>{
+fn vec_multi(a: &[i32], b: &[i32]) -> Vec<i32>{
     let mut c = Vec::new();
 
-    if a.len() < b.len() {
-        for i in 0..a.len() {
-            c.push(a[i] * b[i]);
-        }
-    }
-    else{
-        for i in 0..b.len(){
-            c.push(a[i] * b[i]);
-        }
-    }
+    let len_2 = std::cmp::min(a.len(), b.len());
 
+    for i in 0..len_2{
+        c.push(a[i] * b[i]);
+    }
     c
     
 }
 
-fn vec_multi2(a: Vec<i32>, b: Vec<i32>) -> Vec<i32>{
-    a.into_iter()
-    .zip(b.into_iter())
+fn vec_multi2(a: &[i32], b: &[i32]) -> Vec<i32>{
+    a.iter()
+    .zip(b.iter())
     .map(|(x,y)| x*y)
     .collect()
 
@@ -86,30 +81,41 @@ fn vec_multi2(a: Vec<i32>, b: Vec<i32>) -> Vec<i32>{
 
 fn main(){
 
-    let a = vec![0;100];
-    let b = vec![0;100];
+    //let a = vec![1;100];
+    let mut a: Vec<i32> = (0..100).collect();
+    let mut b = vec![1;100];
+    let mut c_random = vec![1;100];
 
-    //let _b2 = vec![];
-
-    let mut rand = rand::rng().random_range(1..10);
-
-    let b2: Vec<i32> = a
-    .into_iter()
-    .map( |x| {
-        let r: i32 = rand;
-        x * r
-    })
-    .collect();
+    for i in 0..c_random.len(){
+        c_random[i] = rand::rng().random_range(1..100);
+    }
 
 
+    let mut rand_fi = rand::rng().random_range(1..10);
 
-    print!("len of a: {}", a.len());
-    print!("\n\n");
-    print!("len of b: {}", b.len());
-    
+    for i in 0..a.len(){
+        a[i] = a[i] * rand_fi;
+    }
 
-    // cargo run -p math_rust --bin teste_figas 
-    
-    println!("{}", rand);
+    print!("{}\n", rand_fi);
+    //for i in &a{
+    //    println!("a2: {}", i);
+    //}
+
+    for i in 0..b.len(){
+        
+        b[i] = b[i] * rand_fi;
+    }
+
+    println!("Vendo um exemplar de c {}", c_random[10]);
+
+    let c1 = vec_multi(&a, &b);
+    let c2 = vec_multi(&c_random, &b);
+    let c3 = vec_multi2(&a, &b);
+
+    for i in &c1{
+        println!("c1: {}", i);
+    }
+
 
 }
