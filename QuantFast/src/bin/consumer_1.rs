@@ -1,5 +1,6 @@
 use QuantFast::{get_connection, create_consumer};
-use lapin::{types::FieldTable};
+use lapin::{protocol::queue, types::FieldTable};
+use uuid::Uuid;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -8,11 +9,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let arguments = FieldTable::default();
     let exchange = "figas_clay";
-    let routing_key = "figas_test";
-    let queue_name = "figas_test";
+    let routing_key = "figas_test"; 
+    let queue_name = "figas_clay";
+    //let queue_name = format!("queue_name_ {}", Uuid::new_v4());
 
-
-    create_consumer(&channel, queue_name, exchange, routing_key, arguments).await?;
+    create_consumer(&channel, &queue_name, exchange, routing_key, arguments).await?;
 
     Ok(())
 }

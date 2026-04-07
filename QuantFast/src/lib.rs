@@ -2,8 +2,8 @@ use lapin::{
     BasicProperties, Connection, ConnectionProperties, options::*, protocol::exchange, types::FieldTable
 };
 use futures_util::stream::StreamExt; // You'll need the futures-util crate
-use std::error::Error;
-
+use std::{error::Error, f64::consts::{EULER_GAMMA, LN_10}, intrinsics::{powf64, sqrtf64}};
+use statrs::distribution::{self, ContinuousCDF};
 
 pub fn add(left: u64, right: u64) -> u64 {
     left + right
@@ -26,6 +26,30 @@ pub fn reduce(vec: &[usize], f: fn(usize, usize) -> usize) -> usize{
 // --------------- Finance math Methods ------------------
 
 // european option price 
+
+//TODO methods
+//C(S,t) is the price of a european call option 
+//P(S,t) is the price of a european put option
+//V(S,t) is the price of the option as a function of the underlying asset S at time t, in particular
+
+//help -> S_t is the stock price in time t
+
+fn call_europe(S: f64, K: f64, r: f64, sig: f64, T: f64, t: f64){
+    d1 = 1 / sig * sqrtf64(T - t) * (ln(S/K) + (r + powf64(sig, 2.0) * (T -t)))
+
+    d2 = d1 - sig * sqrtf64(T - t)
+
+    let C = (distribution::Normal::cdf(&self, d1) * 
+    S - 
+    distribution::Normal::cdf(&self, d2) * K
+    * K * powf64(EULER_GAMMA, -r(*T - *t))
+    );
+    
+}
+
+fn put_europe(){
+
+}
 
 // calculate the greeks of an option ( delta, gamma, vega, theta, rho )
 
