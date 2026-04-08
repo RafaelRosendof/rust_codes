@@ -1,7 +1,8 @@
 [workspace]
 members = [
     "math_rust",
-    "distributed_rust", "data_structs", "QuantFast",
+    "distributed_rust",
+    "QuantFast"
 ]
 
 [package]
