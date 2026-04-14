@@ -3,7 +3,7 @@ use lapin::{
 };
 use futures_util::stream::StreamExt;
 use std::{error::Error};
-
+use yahoo_finance::{Bar, Interval, history};
 
 pub struct OptionInputs {
     pub s: f64,    // Spot price
@@ -27,7 +27,27 @@ pub struct FinanceData{
 
 //scraping of data from yahoo and google finance
 
-// bin/scraping.rs
+pub async fn collect_retrieve(symbol: &str) -> Result<Vec<Bar>>{
+
+    match history::retrieve(symbol).await{
+
+        Err(e) => println!("Failed to call yahoo finance api for {:?}", e),
+        Ok(data) => 
+            for bar in &data{
+                println!("{:?}", bar);
+            }
+    }
+}
+
+pub async fn collect_retrieve_interval(symbol: &str, interval: Interval) -> Result<Vec<Bar>>{
+
+
+}
+
+pub async fn collect_data_range(symbol: &str, start: DateTime<Utc>, end: Option<DateTime<Utc>>) -> Result<Vec<Bar>>{
+
+    
+}
 
 
 // --------------- Web Server and RabbitMQ Methods ----------------------
@@ -137,40 +157,4 @@ pub async fn create_consumer(
     }
 
     Ok(())
-}
-
-//  bin/server.rs (build a server that listens to the rabbitMQ and responds to the rabbit to the client )
-
-// bin/client.rs (build a client that sends a request to the rabbitMQ and listens for the response from the server )
-
-// bin/producer.rs (build a producer that sends a message to the rabbitMQ )
-
-// bin/consumer.rs (build a consumer that listens to the rabbitMQ and processes the messages )
-
-
-
-
-
-// ---------------- CLI Logic ---------------------------- 
-
-// build CLI main logic 
-
-// build CLI commands to call all the methods above
-
-// bin/cli.rs
-
-pub fn add(left: usize, right: usize) -> usize {
-    left + right
-}
-
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
-    }
 }

@@ -1,10 +1,9 @@
 [package]
-name = "QuantFast"
+name = "quant_math"
 version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-# Async & Networking
 tokio = { version = "1.0", features = ["full"] }
 lapin = "2.3"
 serde = { version = "1.0", features = ["derive"] }
@@ -24,5 +23,4 @@ rayon = "1.8"
 
 # Data
 # need the yahoo_finance
-reqwest = { version = "0.11", features = ["json"] }
-
+reqwest = { version = "0.11", features = ["json"]}
