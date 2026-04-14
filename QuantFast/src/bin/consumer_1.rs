@@ -2,6 +2,15 @@ use QuantFast::{get_connection, create_consumer};
 use lapin::{protocol::queue, types::FieldTable};
 use uuid::Uuid;
 
+pub struct payload{
+
+}
+
+fn call_functions() -> bool{
+    
+}
+
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let conn = get_connection("127.0.0.1", 5672).await?;
