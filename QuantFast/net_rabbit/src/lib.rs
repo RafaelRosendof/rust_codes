@@ -21,7 +21,17 @@ pub struct FinanceData{
     // 
 }
 
-
+#[derive(Debug, Serialize, Deserialize)]
+pub struct FinanceRequest {
+    pub to: String,
+    pub method: String,
+    pub s: f64,
+    pub k: f64,
+    pub r: f64,
+    pub sig: f64,
+    pub t_expiry: f64,
+    pub t_start: f64,
+}
 
 // ---------------- Scraoping data from yahoo and google finance ----------------------
 
@@ -41,13 +51,29 @@ pub async fn collect_retrieve(symbol: &str) -> Result<Vec<Bar>>{
 
 pub async fn collect_retrieve_interval(symbol: &str, interval: Interval) -> Result<Vec<Bar>>{
 
+    match history::retrieve_interval(symbol, interval).await{
+
+        Err(e) => println!("Failed to call yahoo finance api for {:?}", e),
+        Ok(data) => 
+            for bar in &data{
+                println!("{:?}", bar);
+            }
+    }
 
 }
 
 pub async fn collect_data_range(symbol: &str, start: DateTime<Utc>, end: Option<DateTime<Utc>>) -> Result<Vec<Bar>>{
 
-    
+    match history::retrieve_range(symbol, start, end).await{
+        Err(e) => println!("Failed to call yahoo finance api for {:?}", e),
+        Ok(data) => 
+            for bar in &data{
+                println!("{:?}", bar);
+            }
+    }
+
 }
+
 
 
 // --------------- Web Server and RabbitMQ Methods ----------------------
