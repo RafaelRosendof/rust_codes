@@ -1,9 +1,15 @@
+use lapin::protocol::channel;
 use lapin::{
     BasicProperties, Connection, ConnectionProperties, options::*, types::FieldTable
 };
+use yfinance_rs::Ticker;
+use yfinance_rs::YfClient;
+use yfinance_rs::YfClientBuilder;
+use yfinance_rs::Candle;
+use serde::{Serialize, Deserialize};
 use futures_util::stream::StreamExt;
 use std::{error::Error};
-use yahoo_finance::{Bar, Interval, history};
+//use yahoo_finance::{Bar, Interval, history, DateTime};
 
 pub struct OptionInputs {
     pub s: f64,    // Spot price
@@ -37,43 +43,67 @@ pub struct FinanceRequest {
 
 //scraping of data from yahoo and google finance
 
-pub async fn collect_retrieve(symbol: &str) -> Result<Vec<Bar>>{
+//pub async fn collect_retrieve(symbol: &str) -> Result<Vec<Bar>>{
+//
+//    match history::retrieve(symbol).await{
+//
+//        Err(e) => println!("Failed to call yahoo finance api for {:?}", e),
+//        Ok(data) => 
+//            for bar in &data{
+//                println!("{:?}", bar);
+//            }
+//    }
+//}
+//
+//pub async fn collect_retrieve_interval(symbol: &str, interval: Interval) -> Result<Vec<Bar>>{
+//
+//    match history::retrieve_interval(symbol, interval).await{
+//
+//        Err(e) => println!("Failed to call yahoo finance api for {:?}", e),
+//        Ok(data) => 
+//            for bar in &data{
+//                println!("{:?}", bar);
+//            }
+//    }
+//
+//}
+//
+//pub async fn collect_data_range(symbol: &str, start: DateTime<Utc>, end: Option<DateTime<Utc>>) -> Result<Vec<Bar>>{
+//
+//    match history::retrieve_range(symbol, start, end).await{
+//        Err(e) => println!("Failed to call yahoo finance api for {:?}", e),
+//        Ok(data) => 
+//            for bar in &data{
+//                println!("{:?}", bar);
+//            }
+//    }
+//
+//}
 
-    match history::retrieve(symbol).await{
+pub async fn collect_raw_data(stock_symbol: &str) -> Result<(), Box<dyn std::error::Error>> {
+    let client = YfClient::default();
+    let ticker = Ticker::new(&client, stock_symbol);
 
-        Err(e) => println!("Failed to call yahoo finance api for {:?}", e),
-        Ok(data) => 
-            for bar in &data{
-                println!("{:?}", bar);
-            }
+    let quote = ticker.quote().await?;
+
+    println!("Quote for {}: {:?}", stock_symbol, quote);
+    println!("Quote for {}: {:?}", stock_symbol, quote
+    .price.as_ref().map(|p| yfinance_rs::core::conversions::money_to_f64(p)).unwrap_or(0.0));
+    
+    let hist = ticker.history(Some(yfinance_rs::Range::D5),
+    Some(yfinance_rs::Interval::D1), false ).await?;
+
+    if let Some(last_bar) = hist.last(){
+        println!("Last closing price: ${:.2} on timestamp {}", yfinance_rs::core::conversions::money_to_f64(&last_bar.close), last_bar.ts);
     }
-}
 
-pub async fn collect_retrieve_interval(symbol: &str, interval: Interval) -> Result<Vec<Bar>>{
-
-    match history::retrieve_interval(symbol, interval).await{
-
-        Err(e) => println!("Failed to call yahoo finance api for {:?}", e),
-        Ok(data) => 
-            for bar in &data{
-                println!("{:?}", bar);
-            }
+    let recs = ticker.recommendations().await?;
+    if let Some(latest_rec) = recs.first() {
+        println!("Latest recommendation period: {}", latest_rec.period);
     }
 
+    Ok(())
 }
-
-pub async fn collect_data_range(symbol: &str, start: DateTime<Utc>, end: Option<DateTime<Utc>>) -> Result<Vec<Bar>>{
-
-    match history::retrieve_range(symbol, start, end).await{
-        Err(e) => println!("Failed to call yahoo finance api for {:?}", e),
-        Ok(data) => 
-            for bar in &data{
-                println!("{:?}", bar);
-            }
-    }
-
-}
-
 
 
 // --------------- Web Server and RabbitMQ Methods ----------------------

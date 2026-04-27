@@ -95,6 +95,16 @@ fn d1(S: f64, K: f64, r: f64, sig: f64, T: f64, t: f64) -> f64{
     d1
 }
 
+// a simple example of a closure
+fn d1_closure(S: f64, K: f64, r: f64, sig: f64, T: f64, t: f64){
+
+    let d1_c =  | S, K, r, sig, T, t | -> f64 {
+        println!("Show the d1 function from black scholes");
+        let d1_k = d1(S, K, r, sig, T, t);
+        d1_k
+    };
+
+}
 
 fn d2(S: f64, K: f64, r: f64, sig: f64, T: f64, t: f64) -> f64{
 
