@@ -6,7 +6,10 @@ use rayon::prelude::*;
 use std::{f64::consts::{E}};
 use statrs::distribution;
 use statrs::distribution::{Continuous, ContinuousCDF};
+use serde::Deserialize;
 
+#[derive(Deserialize)]
+#[serde(rename_all = "snake_case")]
 
 pub struct OptionInputs {
     pub s: f64,    // Spot price
@@ -17,17 +20,35 @@ pub struct OptionInputs {
 }
 
 pub struct GreeksOptions{
-    pub k: f64,
+    pub S: f64,
+    pub K: f64,
+    pub r: f64,
+    pub sig: f64,
     pub T: f64,
     pub t: f64,
-    pub r: f64,
-    pub S: f64,
-    pub sig: f64,
 }
 
 pub struct FinanceData{
     // 
 }
+
+
+pub enum FinanceMethod{
+    CallEurope,
+    PutEurope,
+    CallDelta,
+    PutDelta,
+    CallGamma,
+    PutGamma,
+    Vega,
+    ThetaCall,
+    ThetaPut,
+    RhoCall,
+    RhoPut,
+    MonteCarlo,
+    MonteCarloFast,
+}
+
 
 pub fn map(vec: &[usize], f: fn(usize) -> usize) -> Vec<usize>{
     vec.iter()
@@ -74,6 +95,16 @@ fn d1(S: f64, K: f64, r: f64, sig: f64, T: f64, t: f64) -> f64{
     d1
 }
 
+// a simple example of a closure
+fn d1_closure(S: f64, K: f64, r: f64, sig: f64, T: f64, t: f64){
+
+    let d1_c =  | S, K, r, sig, T, t | -> f64 {
+        println!("Show the d1 function from black scholes");
+        let d1_k = d1(S, K, r, sig, T, t);
+        d1_k
+    };
+
+}
 
 fn d2(S: f64, K: f64, r: f64, sig: f64, T: f64, t: f64) -> f64{
 
@@ -83,31 +114,6 @@ fn d2(S: f64, K: f64, r: f64, sig: f64, T: f64, t: f64) -> f64{
 
     d2
 }
-
-/*
- N'(x) denotes the standard normal probability density function: 
-
-    Delta -> call N(d1) put -> -N(-d1)
-
-    Gamma -> N'(d1) / S * sig * (T-t).sqrt()
-
-    Vega -> S * N'(d1) * (T-t).sqrt()
-
-    Theta call -( (S * N'(d1) * sig) / 2 * (T - t).sqrt() ) - 
-    
-    r * K * E.powf(-r * (T - t)) * N(d2) 
-
-
-    Theta put  -( (S * N'(d1) * sig) / 2 * (T - t).sqrt() ) +
-    
-    r * K * E.powf(-r * (T - t)) * N(d2)
-
-
-    Rho call -> K(T - t) * E.powf(-r * (T - t)) * N(d2)
-
-    Rho put -> -K(T - t) * E.powf(-r * (T - t)) * N(-d2)
-
-*/
 
 fn call_delta_f(d1: f64) -> f64{
     let n = distribution::Normal::new(0.0, 1.0).unwrap();
@@ -262,35 +268,25 @@ pub fn monte_carlo_fast_f(
     (total_payoff / iterations as f64) * (-r * t).exp()
 }
 
+pub fn finance_factory(method: FinanceMethod, data: &GreeksOptions) -> f64{
+    let GreeksOptions {S, K, r, sig, T, t} = *data;
 
-pub fn finance_wrapper(method: &str, data_finance: &GreeksOptions) -> f64{
-
-    let d1 = d1(data_finance.S, data_finance.k, data_finance.r, data_finance.sig, data_finance.T, data_finance.t);
-    let d2 = d2(data_finance.S, data_finance.k, data_finance.r, data_finance.sig, data_finance.T, data_finance.t);
-
-    let S = data_finance.S;
-    let K = data_finance.k;
-    let r = data_finance.r;
-    let sig = data_finance.sig;
-    let T = data_finance.T;
-    let t = data_finance.t;
+    let d1 = || d1(S, K, r, sig, T, t);
+    let d2 = || d2(S, K, r, sig, T, t);
 
     match method {
-        call_europe => call_europe_f(S, K, r, sig, T, t),
-        put_europe => put_europe_f(S, K, r, sig, T, t),
-        call_delta => call_delta_f(d1),
-        put_delta => put_delta_f(d1),
-        call_gamma => call_gamma_f(d1, S, sig, T, t),
-        put_gamma => put_gamma_f(d1, S, sig, T, t),
-        vega => vega_f(S, d1, T, t),
-        theta_call => theta_call_f(S, d1, sig, T, t, r, K, d2),
-        theta_put => theta_put_f(S, d1, sig, T, t, r, K, d2),
-        rho_call => rho_call_f(K, T, t, r, d2),
-        rho_put => rho_put_f(K, T, t, r, d2),
-        monte_carlo => monte_carlo_f(S, r, sig, T, K, 1000, 10_000),
-        monte_carlo_fast => monte_carlo_fast_f(S, r, sig, T, K, 1000, 10_000),
-        _ => panic!("Invalid method name"),
+        FinanceMethod::CallDelta => call_delta_f(d1()),
+        FinanceMethod::PutDelta => put_delta_f(d1()),
+        FinanceMethod::PutEurope => put_europe_f(S, K, r, sig, T, t),
+        FinanceMethod::CallEurope => call_europe_f(S, K, r, sig, T, t),
+        FinanceMethod::CallGamma => call_gamma_f(d1(), S, sig, T, t),
+        FinanceMethod::PutGamma => put_gamma_f(d1(), S, sig, T, t),
+        FinanceMethod::Vega => vega_f(S, d1(), T, t),
+        FinanceMethod::ThetaCall => theta_call_f(S, d1(), sig, T, t, r, K, d2()),
+        FinanceMethod::ThetaPut => theta_put_f(S, d1(), sig, T, t, r, K, d2()),
+        FinanceMethod::RhoCall => rho_call_f(K, T, t, r, d2()),
+        FinanceMethod::RhoPut => rho_put_f(K, T, t, r, d2()),
+        FinanceMethod::MonteCarlo => monte_carlo_f(S, r, sig, T, K, 1000, 10_000),
+        FinanceMethod::MonteCarloFast => monte_carlo_fast_f(S, r, sig, T, K, 1000, 10_000),
     }
-
 }
-
