@@ -1,4 +1,5 @@
 use futures_util::stream::StreamExt;
+use strum_macros::Display;
 use std::{error::Error};
 use rand_distr::{Distribution, num_traits::Pow};
 use rayon::{iter::{IntoParallelIterator}, prelude};
@@ -14,7 +15,7 @@ pub struct FinanceData{
     // 
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Display)]
 pub enum FinanceMethod{
     CallEurope,
     PutEurope,

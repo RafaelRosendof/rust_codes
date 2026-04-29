@@ -1,11 +1,11 @@
-use lapin::options::{BasicConsumeOptions, QueueDeclareOptions};
+    use lapin::options::{BasicConsumeOptions, QueueDeclareOptions};
 //use QuantFast::{get_connection, create_consumer};
 use lapin::{protocol::queue, types::FieldTable, options::BasicAckOptions};
 use uuid::Uuid;
-use net_rabbit::{FinanceRequest, create_consumer};
+use net_rabbit::{create_consumer};
 use net_rabbit::get_connection;
 use serde::{Deserialize, Serialize};
-use quant_math::{FinanceMethod, finance_factory};
+use quant_math::{FinanceMethod, finance_factory, FinanceRequest};
 use futures_util::stream::StreamExt;
 
 
@@ -59,7 +59,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     _=> 0.0,
                 
                 };
-                println!("Result for {}: {} = {}", req.to, req.method, result);
+                let method = req.method;
+                let client = req.to.clone();
+                println!("Result for {:?}: {} = {}", client, method, result);
             } else {
                 eprintln!("Failed to parse message: {}", data)
             }
