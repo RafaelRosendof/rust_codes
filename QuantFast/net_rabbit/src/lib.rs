@@ -2,6 +2,7 @@ use lapin::protocol::channel;
 use lapin::{
     BasicProperties, Connection, ConnectionProperties, options::*, types::FieldTable
 };
+use quant_math::FinanceMethod;
 use yfinance_rs::Ticker;
 use yfinance_rs::YfClient;
 use yfinance_rs::YfClientBuilder;
@@ -23,20 +24,33 @@ pub struct GreeksOptions{
     //
 }
 
-pub struct FinanceData{
-    // 
-}
-
 #[derive(Debug, Serialize, Deserialize)]
-pub struct FinanceRequest {
-    pub to: String,
-    pub method: String,
+pub struct FinanceData{
     pub s: f64,
     pub k: f64,
     pub r: f64,
     pub sig: f64,
     pub t_expiry: f64,
     pub t_start: f64,
+}
+
+//#[derive(Debug, Serialize, Deserialize)]
+//pub struct FinanceRequest {
+//    pub to: String,
+//    pub method: FinanceMethod,
+//    pub s: f64,
+//    pub k: f64,
+//    pub r: f64,
+//    pub sig: f64,
+//    pub t_expiry: f64,
+//    pub t_start: f64,
+//}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct FinanceRequestRabbit {
+    pub to: String,
+    pub method: FinanceMethod,
+    pub data: FinanceData,
 }
 
 // ---------------- Scraoping data from yahoo and google finance ----------------------
