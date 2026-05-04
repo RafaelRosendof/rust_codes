@@ -18,12 +18,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         let message = json!({
             "to": format!("client_{}", i),
             "method": if i % 2 == 0 { FinanceMethod::CallEurope } else { FinanceMethod::PutEurope },
-            "s": 100.0 + (i as f64),
-            "k": 110.0,
-            "r": 0.05,
-            "sig": 0.2,
-            "t_expiry": 1.0,
-            "t_start": 0.0
+            "params": {
+                "s": 100.0,
+                "k": 110.0,
+                "r": 0.05,
+                "sig": 0.2,
+                "t_expiry": 1.0,
+                "t_start": 0.0
+            }
         }).to_string();
         
         net_rabbit::publish_message(&channel, "figas_clay", "figas_test", &message).await?;

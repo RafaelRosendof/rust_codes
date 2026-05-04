@@ -2,27 +2,15 @@ use lapin::protocol::channel;
 use lapin::{
     BasicProperties, Connection, ConnectionProperties, options::*, types::FieldTable
 };
-use quant_math::FinanceMethod;
+use quant_math::{FinanceMethod, FinancerequestTo};
 use yfinance_rs::Ticker;
 use yfinance_rs::YfClient;
 use yfinance_rs::YfClientBuilder;
 use yfinance_rs::Candle;
 use serde::{Serialize, Deserialize};
-use futures_util::stream::StreamExt;
+use futures_util::stream::{Concat, StreamExt};
 use std::{error::Error};
-//use yahoo_finance::{Bar, Interval, history, DateTime};
 
-pub struct OptionInputs {
-    pub s: f64,    // Spot price
-    pub k: f64,    // Strike price
-    pub r: f64,    // Risk-free rate
-    pub sig: f64,  // Volatility
-    pub t: f64,    // Time to maturity
-}
-
-pub struct GreeksOptions{
-    //
-}
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct FinanceData{
@@ -119,6 +107,7 @@ pub async fn collect_raw_data(stock_symbol: &str) -> Result<(), Box<dyn std::err
     Ok(())
 }
 
+// TODO -> build more functions here
 
 // --------------- Web Server and RabbitMQ Methods ----------------------
 
@@ -158,7 +147,38 @@ pub async fn build_producer(
 
 }
 
+pub fn encode_message(message: &FinancerequestTo) -> Vec<u8>{
+    serde_json::to_vec(message).expect("Failed to encode message")
+}
+
+pub fn decode_message(message: &[u8]) -> FinancerequestTo{
+    serde_json::from_slice(message).expect("Failed to decode message")
+}
+
 pub async fn publish_message(
+    channel: &lapin::Channel, 
+    exchange: &str, 
+    routing_key: &str,
+    message: &FinancerequestTo
+) -> Result<(), Box<dyn Error>> {
+
+    let message  = encode_message(message);
+    
+    channel.basic_publish(
+        exchange,
+        routing_key,
+        BasicPublishOptions::default(),
+        &message,
+        BasicProperties::default(),
+    )
+    .await?
+    .await?;
+
+    println!("Message published to exchange: {}", exchange);
+    Ok(())
+}
+
+pub async fn publish_message_str(
     channel: &lapin::Channel, 
     exchange: &str, 
     routing_key: &str, 
@@ -180,15 +200,14 @@ pub async fn publish_message(
     Ok(())
 }
 
+
 pub async fn create_consumer(
     channel: &lapin::Channel,
     queue_name: &str,
     exchange: &str,
     routing_key: &str,
-    //options: QueueBindOptions,
     arguments: FieldTable
 ) -> Result<(), Box<dyn Error>> {
-    // 1. Declare the queue just in case
     channel.queue_declare(
         queue_name, 
         QueueDeclareOptions::default(), 
@@ -202,7 +221,6 @@ pub async fn create_consumer(
          arguments
         ).await?;
 
-    // 2. Start the consumer
     let mut consumer = channel.basic_consume(
         queue_name,
         "my_consumer",
@@ -212,7 +230,6 @@ pub async fn create_consumer(
 
     println!("[*] Waiting for messages on {}. To exit press CTRL+C", queue_name);
 
-    // 3. Instead of spawning, we loop directly in the async function
     while let Some(delivery) = consumer.next().await {
         let delivery = delivery?;
         let data = String::from_utf8_lossy(&delivery.data);
@@ -227,4 +244,12 @@ pub async fn create_consumer(
     }
 
     Ok(())
+}
+
+pub fn create_client_producer() -> Result<(), Box<dyn Error>>{
+
+
+
+    Ok(())
+
 }

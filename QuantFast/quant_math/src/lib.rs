@@ -15,7 +15,7 @@ pub struct FinanceData{
     // 
 }
 
-#[derive(Serialize, Deserialize, Debug, Display)]
+#[derive(Serialize, Deserialize, Debug, Display, Clone, Copy)]
 pub enum FinanceMethod{
     CallEurope,
     PutEurope,
@@ -32,16 +32,21 @@ pub enum FinanceMethod{
     MonteCarloFast,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct FinanceRequest {
-    pub to: String,
-    pub method: FinanceMethod,
     pub s: f64,
     pub k: f64,
     pub r: f64,
     pub sig: f64,
     pub t_expiry: f64,
     pub t_start: f64,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct FinancerequestTo{
+    pub to: String,
+    pub method: FinanceMethod,
+    pub params: FinanceRequest,
 }
 
 
@@ -263,34 +268,24 @@ pub fn monte_carlo_fast_f(
     (total_payoff / iterations as f64) * (-r * t).exp()
 }
 
-pub fn finance_factory(method: FinanceMethod, data: FinanceRequest) -> f64{
-    let FinanceRequest {
-            s,
-            k,
-            r,
-            sig,
-            t_expiry,
-            t_start,
-            to,
-            method,
-        } = data;
+pub fn finance_factory(method: FinanceMethod, p: &FinanceRequest) -> f64{
 
-    let d1 = || d1(s, k, r, sig, t_expiry, t_start);
-    let d2 = || d2(s, k, r, sig, t_expiry, t_start);
+    let d1 = || d1(p.s, p.k, p.r, p.sig, p.t_expiry, p.t_start);
+    let d2 = || d2(p.s, p.k, p.r, p.sig, p.t_expiry, p.t_start);
 
     match method {
         FinanceMethod::CallDelta => call_delta_f(d1()),
         FinanceMethod::PutDelta => put_delta_f(d1()),
-        FinanceMethod::PutEurope => put_europe_f(s, k, r, sig, t_expiry, t_start),
-        FinanceMethod::CallEurope => call_europe_f(s, k, r, sig, t_expiry, t_start),
-        FinanceMethod::CallGamma => call_gamma_f(d1(), s, sig, t_expiry, t_start),
-        FinanceMethod::PutGamma => put_gamma_f(d1(), s, sig, t_expiry, t_start),
-        FinanceMethod::Vega => vega_f(s, d1(), t_expiry, t_start),
-        FinanceMethod::ThetaCall => theta_call_f(s, d1(), sig, t_expiry, t_start, r, k, d2()),
-        FinanceMethod::ThetaPut => theta_put_f(s, d1(), sig, t_expiry, t_start, r, k, d2()),
-        FinanceMethod::RhoCall => rho_call_f(k, t_expiry, t_start, r, d2()),
-        FinanceMethod::RhoPut => rho_put_f(k, t_expiry, t_start, r, d2()),
-        FinanceMethod::MonteCarlo => monte_carlo_f(s, r, sig, t_expiry, k, 1000, 10_000),
-        FinanceMethod::MonteCarloFast => monte_carlo_fast_f(s, r, sig, t_expiry, k, 1000, 10_000),
+        FinanceMethod::PutEurope => put_europe_f(p.s, p.k, p.r, p.sig, p.t_expiry, p.t_start),
+        FinanceMethod::CallEurope => call_europe_f(p.s, p.k, p.r, p.sig, p.t_expiry, p.t_start),
+        FinanceMethod::CallGamma => call_gamma_f(d1(), p.s, p.sig, p.t_expiry, p.t_start),
+        FinanceMethod::PutGamma => put_gamma_f(d1(), p.s, p.sig, p.t_expiry, p.t_start),
+        FinanceMethod::Vega => vega_f(p.s, d1(), p.t_expiry, p.t_start),
+        FinanceMethod::ThetaCall => theta_call_f(p.s, d1(), p.sig, p.t_expiry, p.t_start, p.r, p.k, d2()),
+        FinanceMethod::ThetaPut => theta_put_f(p.s, d1(), p.sig, p.t_expiry, p.t_start, p.r, p.k, d2()),
+        FinanceMethod::RhoCall => rho_call_f(p.k, p.t_expiry, p.t_start, p.r, d2()),
+        FinanceMethod::RhoPut => rho_put_f(p.k, p.t_expiry, p.t_start, p.r, d2()),
+        FinanceMethod::MonteCarlo => monte_carlo_f(p.s, p.r, p.sig, p.t_expiry, p.k, 1000, 10_000),
+        FinanceMethod::MonteCarloFast => monte_carlo_fast_f(p.s, p.r, p.sig, p.t_expiry, p.k, 1000, 10_000),
     }
 }

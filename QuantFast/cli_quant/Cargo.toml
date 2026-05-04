@@ -16,6 +16,9 @@ clap = { version = "4.4", features = ["derive"] }
 uuid = { version = "1.6", features = ["v4", "serde"] }
 dotenvy = "0.15"
 
+quant_math = { path = "../quant_math" }
+net_rabbit = { path = "../net_rabbit" }
+
 # Finance & Math
 rand = "0.8"
 rand_distr = "0.4"
