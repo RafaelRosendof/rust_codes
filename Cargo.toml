@@ -2,7 +2,10 @@
 members = [
     "math_rust",
     "distributed_rust",
-    "QuantFast"
+    "QuantFast",
+    "QuantFast/quant_math",
+    "QuantFast/net_rabbit",
+    "QuantFast/cli_quant",
 ]
 
 [package]
