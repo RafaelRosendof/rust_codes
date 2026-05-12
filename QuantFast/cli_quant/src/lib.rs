@@ -1,14 +1,15 @@
 use quant_math::{FinancerequestTo, FinanceMethod};
 use serde_json::json;
+use std::{error::Error};
 use net_rabbit::{collect_raw_data, build_producer, publish_message, get_connection};
 
-pub async fn request_stock(name: &str){
+pub async fn request_stock(name: &str) -> Result<f64, Box<dyn Error>>{
 
     let stock = collect_raw_data(name).await;
 
     println!("Stock: {:?} \n", name);
-    println!("[  DATA  ] {:?}", stock);
-
+    //println!("[  DATA  ] {:?}", stock);
+    Ok(stock?)
 }
 
 pub async fn send_request(data_request: FinancerequestTo, exchange: &str, routing_key: &str) -> Result<(), Box<dyn std::error::Error>>{

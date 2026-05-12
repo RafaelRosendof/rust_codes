@@ -82,7 +82,7 @@ pub struct FinanceRequestRabbit {
 //
 //}
 
-pub async fn collect_raw_data(stock_symbol: &str) -> Result<(), Box<dyn std::error::Error>> {
+pub async fn collect_raw_data(stock_symbol: &str) -> Result<f64, Box<dyn Error>> {
     let client = YfClient::default();
     let ticker = Ticker::new(&client, stock_symbol);
 
@@ -103,8 +103,19 @@ pub async fn collect_raw_data(stock_symbol: &str) -> Result<(), Box<dyn std::err
     if let Some(latest_rec) = recs.first() {
         println!("Latest recommendation period: {}", latest_rec.period);
     }
+    let price = quote.price;
 
-    Ok(())
+    if let Some(money) = &price{
+        let spot_price: f64 = yfinance_rs::core::conversions::money_to_f64(money);
+        println!("Spot price: ${:.2}", spot_price);
+
+        return Ok(spot_price);
+    }
+    else{
+        print!("No spot price: 0.00");
+        return Ok(0.00);
+    }
+    
 }
 
 // TODO -> build more functions here
