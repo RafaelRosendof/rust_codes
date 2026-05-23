@@ -63,7 +63,7 @@ pub fn reduce(vec: &[usize], f: fn(usize, usize) -> usize) -> usize{
     .fold(vec[0], |acc, &x| f(acc, x))
 }
 
-
+// olá
 
 pub fn call_europe_f(S: f64, K: f64, r: f64, sig: f64, T: f64, t: f64) -> f64{
 
