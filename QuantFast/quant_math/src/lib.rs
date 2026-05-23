@@ -9,11 +9,11 @@ use statrs::distribution;
 use statrs::distribution::{Continuous, ContinuousCDF};
 use serde::{Deserialize, Serialize};
 
-#[derive(Deserialize)]
-#[serde(rename_all = "snake_case")]
-pub struct FinanceData{
-    // 
-}
+//#[derive(Deserialize)]
+//#[serde(rename_all = "snake_case")]
+//pub struct FinanceData{
+//    // 
+//}
 
 #[derive(Serialize, Deserialize, Debug, Display, Clone, Copy)]
 pub enum FinanceMethod{

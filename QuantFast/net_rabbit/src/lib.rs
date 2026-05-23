@@ -3,6 +3,7 @@ use lapin::{
     BasicProperties, Connection, ConnectionProperties, options::*, types::FieldTable
 };
 use quant_math::{FinanceMethod, FinancerequestTo};
+use uuid::Uuid;
 use yfinance_rs::Ticker;
 use yfinance_rs::YfClient;
 use yfinance_rs::YfClientBuilder;
@@ -164,6 +165,35 @@ pub fn encode_message(message: &FinancerequestTo) -> Vec<u8>{
 
 pub fn decode_message(message: &[u8]) -> FinancerequestTo{
     serde_json::from_slice(message).expect("Failed to decode message")
+}
+
+pub async fn publish_rpc_message(
+    channel: &lapin::Channel,
+    exchange: &str,
+    routing_key: &str,
+    message: &FinancerequestTo,
+    reply_queue: &str,
+) -> Result<String, Box<dyn Error>>{
+
+
+    let message_bytes = encode_message(message);
+    let correlation_id = Uuid::new_v4().to_string();
+
+    let props = BasicProperties::default()
+    .with_reply_to(reply_queue.into())
+    .with_correlation_id(correlation_id.clone().into());
+
+    channel.basic_publish(
+        exchange,
+        routing_key,
+        BasicPublishOptions::default(),
+        &message_bytes,
+        props,
+    )
+    .await?
+    .await?;
+    
+    Ok(correlation_id)
 }
 
 pub async fn publish_message(

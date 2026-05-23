@@ -1,5 +1,6 @@
-use cli_quant::{request_stock, send_request};
-use quant_math::{FinanceMethod, FinancerequestTo};
+use cli_quant::{create_local_consumer, request_stock, send_request};
+use lapin::protocol::{channel, queue};
+use quant_math::{FinanceMethod, FinancerequestTo, FinanceRequest};
 use rayon::vec;
 use std::io::{self, Write};
 
@@ -38,29 +39,101 @@ fn choice_2(){
     println!("\n\n ");
 }
 
-async fn choice_3(){
+async fn choice_3(queue_name: &str, exchange: &str, routing_key: &str){
     println!("Choice: Input your own data and acess the methods");
-    let mut data = vec!["", "", "", "", "", "", "", "", ""];
 
-    for i in 0..data.len() {
-        println!("Put the data for {}", data[i]);
-        let mut input = String::new();
-        io::stdin().read_line(&mut input).expect("Failed to read line");
-    }
-
-    print!("Do you want to see the math options ? Or proceed type directly the method: 1 or 2");
+    println!("Do you want to see the math options ? Or proceed with the stocks? 1 or 2");
     let mut choice = String::new();
     io::stdin().read_line(&mut choice).expect("Failed to read line");
     let choice = choice.trim();
-
-    if choice == "1" {
-        choice_2();
-    } else {
-        print!("")
+    match choice {
+        "1" => {
+            choice_2();
+        }
+        "2" => {
+            //choice_3(queue_name, exchange, routing_key).await;
+            // _
+        }
+        _ => {
+            println!("Invalid choice. Please try again.");
+        }
     }
+
+    println!("\n");
+    io::stdout().flush().unwrap();
+
+        
+    
+    print!("Choose a method: for each method in the screen you just need to put the number of the method, 0 for the first and so on: ");
+    io::stdout().flush().unwrap();
+    let mut method = String::new();
+    io::stdin().read_line(&mut method).expect("Failed to read line");
+    let method = method.trim();
+
+    let finance_method = match method {
+        "0" => FinanceMethod::CallEurope,
+        "1" => FinanceMethod::PutEurope,
+        "2" => FinanceMethod::CallDelta,
+        "3" => FinanceMethod::PutDelta,
+        "4" => FinanceMethod::CallGamma,
+        "5" => FinanceMethod::PutGamma,
+        "6" => FinanceMethod::Vega,
+        "7" => FinanceMethod::ThetaCall,
+        "8" => FinanceMethod::ThetaPut,
+        "9" => FinanceMethod::RhoCall,
+        "10" => FinanceMethod::RhoPut,
+        "11" => FinanceMethod::MonteCarlo,
+        "12" => FinanceMethod::MonteCarloFast,
+        _ => {
+            println!("Invalid choice. Please try again.");
+            return;
+        }
+    };
+
+    println!("\n\n ");
+    io::stdout().flush().unwrap();
+
+    let mut data_fields = vec!["s","k", "r", "sig", "t_expiry", "t_start"];
+    let mut data = vec![0.0f64; data_fields.len()];
+
+    for (i, &field) in data_fields.iter().enumerate() {
+        loop {
+            print!("Put the data for {}: ", field);
+            io::stdout().flush().unwrap();
+            let mut input = String::new();
+            io::stdin().read_line(&mut input).expect("Failed to read line");
+            match input.trim().parse::<f64>() {
+                Ok(val) => { data[i] = val; break; }
+                Err(_) => println!("Invalid number, please try again."),
+            }
+        }
+    }
+    
+
+    let finance_data = FinancerequestTo{
+        to: queue_name.to_string(), // Ex: "reply_queue_cliente_123"
+        method: finance_method,
+        params: FinanceRequest{
+            s: data[0],
+            k: data[1],
+            r: data[2],
+            sig: data[3],
+            t_expiry: data[4],
+            t_start: data[5],
+        }
+    };
+
+    println!("\n\n ");
+    println!("Your request is gonna be \n {:?}", finance_data);
+
+    if let Err(e) = send_request(finance_data, exchange, routing_key).await {
+        println!("Failed to send request: {:?}", e);
+    }
+    println!("\n");
+  
 }
 
-async fn choice_4(){
+async fn choice_4(queue_name: &str, exchange: &str, routing_key: &str){
     println!("Choice: Proceed with stock plus the math methods");
     println!("Do you want to see the math options ? Or proceed with the stocks? 1 or 2");
     let mut choice = String::new();
@@ -71,7 +144,7 @@ async fn choice_4(){
             choice_2();
         }
         "2" => {
-            choice_3().await;
+            //choice_3(queue_name, exchange, routing_key).await;
         }
         _ => {
             println!("Invalid choice. Please try again.");
@@ -79,24 +152,94 @@ async fn choice_4(){
     }
     println!("\n\n ");
     print!("Proceed with the ticket stock: ");
+    
     io::stdout().flush().unwrap();
     let mut ticket = String::new();
     io::stdin().read_line(&mut ticket).expect("Failed to read line");
     let ticket = ticket.trim();
-    request_stock(&ticket).await;
+    let value = request_stock(&ticket).await;
+    
     println!("\n\n ");
-    print!("Choose a method: ");
+
+    print!("Choose a method: for each method in the screen you just need to put the number of the method, 0 for the first and so on: ");
     io::stdout().flush().unwrap();
     let mut method = String::new();
     io::stdin().read_line(&mut method).expect("Failed to read line");
     let method = method.trim();
 
+    let finance_method = match method {
+        "0" => FinanceMethod::CallEurope,
+        "1" => FinanceMethod::PutEurope,
+        "2" => FinanceMethod::CallDelta,
+        "3" => FinanceMethod::PutDelta,
+        "4" => FinanceMethod::CallGamma,
+        "5" => FinanceMethod::PutGamma,
+        "6" => FinanceMethod::Vega,
+        "7" => FinanceMethod::ThetaCall,
+        "8" => FinanceMethod::ThetaPut,
+        "9" => FinanceMethod::RhoCall,
+        "10" => FinanceMethod::RhoPut,
+        "11" => FinanceMethod::MonteCarlo,
+        "12" => FinanceMethod::MonteCarloFast,
+        _ => {
+            println!("Invalid choice. Please try again.");
+            return;
+        }
+    };
+
+    println!("\n\n ");
+    print!("So now that you choose your method lets put your data: the current stock price is {:?}", value);
+    io::stdout().flush().unwrap();
+
+    let mut data_fields = vec!["k", "r", "sig", "t_expiry", "t_start"];
+    let mut data = vec![0.0f64; data_fields.len()];
+
+    for (i, &field) in data_fields.iter().enumerate() {
+        loop {
+            print!("Put the data for {}: ", field);
+            io::stdout().flush().unwrap();
+            let mut input = String::new();
+            io::stdin().read_line(&mut input).expect("Failed to read line");
+            match input.trim().parse::<f64>() {
+                Ok(val) => { data[i] = val; break; }
+                Err(_) => println!("Invalid number, please try again."),
+            }
+        }
+    }
+    
+
+    let f64_value = value.unwrap_or(0.0);
+    let finance_data = FinancerequestTo{
+        to: queue_name.to_string(), // Ex: "reply_queue_cliente_123"
+        method: finance_method,
+        params: FinanceRequest{
+            s: f64_value,
+            k: data[0],
+            r: data[1],
+            sig: data[2],
+            t_expiry: data[3],
+            t_start: data[4],
+        }
+    };
+
+    println!("\n\n ");
+    println!("Your request is gonna be \n {:?}", finance_data);
+
+    if let Err(e) = send_request(finance_data, exchange, routing_key).await {
+        println!("Failed to send request: {:?}", e);
+    }
+    println!("\n\n ");
     //TODO 
     /*
     in here i'm need to parse the data from the ticket to fit inside the method that i'm want to use.
     and maybe it gonna need a custom if else to fit in a perfect method 
      */
 
+}
+
+async fn choice_5(){
+    println!("Choice: Proceed with monte carlo simulation");
+    //todo
 }
 
 
@@ -106,6 +249,16 @@ async fn main(){
     println!("-----------------------------------------------------------------------------------------------------------------");
     println!("################# WELLCOME TO THE QUANT_FAST NEW PLATAFORM ############################");
     println!("We gonna present a intuitive menu that we will provide for you ");
+    
+    let reply_queue = uuid::Uuid::new_v4().to_string();
+    if let Err(e) = create_local_consumer(&reply_queue).await {
+        eprintln!("Erro ao criar o consumidor local: {}", e);
+        return;
+    }
+
+    println!("[*] Consumer queue created: {}", reply_queue);
+    println!("\n\n\n");
+
     println!("\n\n\n");
     loop {
         println!( " 
@@ -126,6 +279,8 @@ async fn main(){
 
     let choice = choice.trim();
         // in here, i'm gonna make a better function, each choice gonna be a single function be better in this way
+    let exchange_to_send = "figas_clay";
+    let routing_key_to_send = "figas_test";
     match choice {
         "1" => {
             choice_1().await;
@@ -134,15 +289,16 @@ async fn main(){
             choice_2();
         }
         "3" => {
-            println!("Choice: Input your own data and acess the methods");
+            //println!("Choice: Input your own data and acess the methods");
+            choice_3(&reply_queue, exchange_to_send, routing_key_to_send).await;
         }
         "4" => {
-            println!("Choice: Proceed with stock plus the math methods");
+            //println!("Choice: Proceed with stock plus the math methods");
+            choice_4(&reply_queue, exchange_to_send, routing_key_to_send).await;
         }
         "5" => {
             println!("Choice: Proceed with monte carlo simulation");
-            println!("Choice: Exit");
-            break;
+            choice_5().await;
         }
         "6" => {
             println!("Choice: Exit");
