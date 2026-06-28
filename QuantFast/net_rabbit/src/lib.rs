@@ -3,11 +3,11 @@ use lapin::{
     BasicProperties, Connection, ConnectionProperties, options::*, types::FieldTable
 };
 use quant_math::{FinanceMethod, FinancerequestTo};
-use rdkafka::Message;
-use rdkafka::admin::{AdminClient, AdminOptions, NewTopic, TopicReplication};
-use rdkafka::client::DefaultClientContext;
-use rdkafka::consumer::{Consumer, StreamConsumer};
-use rdkafka::producer::FutureProducer;
+//use rdkafka::Message;
+//use rdkafka::admin::{AdminClient, AdminOptions, NewTopic, TopicReplication};
+//use rdkafka::client::DefaultClientContext;
+//use rdkafka::consumer::{Consumer, StreamConsumer};
+//use rdkafka::producer::FutureProducer;
 use uuid::Uuid;
 use yfinance_rs::Ticker;
 use yfinance_rs::YfClient;
@@ -16,8 +16,8 @@ use yfinance_rs::Candle;
 use serde::{Serialize, Deserialize};
 use futures_util::stream::{Concat, StreamExt};
 use std::{error::Error};
-use rdkafka::config::ClientConfig;
-use rdkafka::producer::{FutureRecord};
+//use rdkafka::config::ClientConfig;
+//use rdkafka::producer::{FutureRecord};
 use std::time::Duration;
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -247,6 +247,7 @@ pub async fn publish_message_str(
     println!("Message published to exchange: {}", exchange);
     Ok(())
 }
+// rdkafka = { version = "0.39", features = ["cmake-build"] }
 
 
 pub async fn create_consumer(
@@ -315,76 +316,76 @@ pub async fn create_consumer(
 // 
 // }
 
-pub async fn create_topic(topic: &str){
-    let admin_client: AdminClient<DefaultClientContext> = ClientConfig::new()
-        .set("bootstrap.servers", "localhost:9092")
-        .create()
-        .expect("Fail to create Kafka AdmClient");
+//pub async fn create_topic(topic: &str){
+//    let admin_client: AdminClient<DefaultClientContext> = ClientConfig::new()
+//        .set("bootstrap.servers", "localhost:9092")
+//        .create()
+//        .expect("Fail to create Kafka AdmClient");
+//
+//    let new_topic = NewTopic::new(topic, 1, TopicReplication::Fixed(1));
+//    let opts = AdminOptions::new();
+//
+//    match admin_client.create_topics(&[new_topic], &opts).await{
+//        Ok(res) => {
+//            for r in res{
+//                match r{
+//                    Ok(topic_name) => println!("Topic '{}' created/verify ", topic_name),
+//                    Err((topic_name, err)) => {
+//                        eprintln!("Advise for topic {} {:?}", topic_name, err);
+//                    
+//                    }
+//                }
+//            }
+//        }
+//        Err(e) => eprintln!("Fatal error {:?} ", e)
+//    }
+//}
+//
+//pub async fn send_ticket_kafka(producer: &FutureProducer, topic: &str, key: &str, payload: &str){
+//    let record = FutureRecord::to(topic)
+//    .key(key)
+//    .payload(payload);
+//    match producer.send(record, Duration::from_secs(0)).await{
+//        Ok(delivery) => println!(
+//            "Got IT! Partition: {}, Offset: {}", 
+//            delivery.partition, delivery.offset
+//        ),
+//        Err( (e, _)) => eprint!("Error to send message {:?} ", e),
+//    }
+//
+//}
 
-    let new_topic = NewTopic::new(topic, 1, TopicReplication::Fixed(1));
-    let opts = AdminOptions::new();
-
-    match admin_client.create_topics(&[new_topic], &opts).await{
-        Ok(res) => {
-            for r in res{
-                match r{
-                    Ok(topic_name) => println!("Topic '{}' created/verify ", topic_name),
-                    Err((topic_name, err)) => {
-                        eprintln!("Advise for topic {} {:?}", topic_name, err);
-                    
-                    }
-                }
-            }
-        }
-        Err(e) => eprintln!("Fatal error {:?} ", e)
-    }
-}
-
-pub async fn send_ticket_kafka(producer: &FutureProducer, topic: &str, key: &str, payload: &str){
-    let record = FutureRecord::to(topic)
-    .key(key)
-    .payload(payload);
-    match producer.send(record, Duration::from_secs(0)).await{
-        Ok(delivery) => println!(
-            "Got IT! Partition: {}, Offset: {}", 
-            delivery.partition, delivery.offset
-        ),
-        Err( (e, _)) => eprint!("Error to send message {:?} ", e),
-    }
-
-}
-
-pub async fn consumer_start(topic: &str){
-    let consumer: StreamConsumer = ClientConfig::new()
-        .set("group.id", "quant_workers")
-        .set("bootstrap.servers", "localhost:9092")
-        .set("enable.partition.eof", "false")
-        .set("session.timeout.ms", "6000")
-        .set("enable.auto.commit", "true") // Auto ack
-        .create()
-        .expect("Falha ao criar o Kafka Consumer");
-
-    consumer.subscribe( &[topic]).expect("Fail to subscribe in the topic");
-
-    println!("Listening topic ' {}' ... ", topic);
-
-    let mut message_stram = consumer.stream();
-
-    while let Some(message) = message_stram.next().await{
-        match message {
-            Err(e) => eprint!("Error to receive message from Kafka: {:?} ", e),
-            Ok(m) => {
-                let paylod = match m.payload_view::<str>(){
-                    None => "",
-                    Some(Ok(s)) => s,
-                    Some(Err(e)) => {
-                        eprintln!("Erro de desserialização: {:?}", e);
-                        ""
-                    }
-                };
-                let key = m.key_view::<str>().unwrap_or_else(|| Ok("NO_KEY")).unwrap_or("KEY_ERROR");
-                println!(" Receivig: Key: {:?}, payload: {} ", m.key_view::<str>(), paylod);
-            }
-        }
-    }
-}
+//pub async fn consumer_start(topic: &str){
+//    let consumer: StreamConsumer = ClientConfig::new()
+//        .set("group.id", "quant_workers")
+//        .set("bootstrap.servers", "localhost:9092")
+//        .set("enable.partition.eof", "false")
+//        .set("session.timeout.ms", "6000")
+//        .set("enable.auto.commit", "true") // Auto ack
+//        .create()
+//        .expect("Falha ao criar o Kafka Consumer");
+//
+//    consumer.subscribe( &[topic]).expect("Fail to subscribe in the topic");
+//
+//    println!("Listening topic ' {}' ... ", topic);
+//
+//    let mut message_stram = consumer.stream();
+//
+//    while let Some(message) = message_stram.next().await{
+//        match message {
+//            Err(e) => eprint!("Error to receive message from Kafka: {:?} ", e),
+//            Ok(m) => {
+//                let paylod = match m.payload_view::<str>(){
+//                    None => "",
+//                    Some(Ok(s)) => s,
+//                    Some(Err(e)) => {
+//                        eprintln!("Erro de desserialização: {:?}", e);
+//                        ""
+//                    }
+//                };
+//                let key = m.key_view::<str>().unwrap_or_else(|| Ok("NO_KEY")).unwrap_or("KEY_ERROR");
+//                println!(" Receivig: Key: {:?}, payload: {} ", m.key_view::<str>(), paylod);
+//            }
+//        }
+//    }
+//}
