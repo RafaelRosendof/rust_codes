@@ -33,7 +33,7 @@ jobs:
       - name: Build Project
         run: cargo build --verbose
 
- docker-delivery:
+docker-delivery:
     name: CD - Docker Build
     needs: build-and-test
     runs-on: ubuntu-latest
